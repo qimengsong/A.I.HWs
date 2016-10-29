@@ -289,9 +289,6 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-        self.top = self.walls.height - 2
-        self.right = self.walls.width - 2
-        self.costFn = lambda x: 1
 
     def getStartState(self):
         """
@@ -299,23 +296,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        return (self.startingPosition, (False, False, False, False))
+        util.raiseNotDefined()
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        goalStates = []
-        goalStates.append(((1,1), (True, True, True, True)))
-        goalStates.append(((1,self.top), (True, True, True, True)))
-        goalStates.append(((self.right,1), (True, True, True, True)))
-        goalStates.append(((self.right, self.top), (True, True, True, True)))
-        
-        if state in goalStates:
-            return True
-        else:
-            return False
+        util.raiseNotDefined()
 
     def getSuccessors(self, state):
         """
@@ -332,24 +320,12 @@ class CornersProblem(search.SearchProblem):
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
-            x,y = state[0]
-            dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
-            nextPos = (nextx, nexty)
-            
-            if self.walls[nextx][nexty]:
-                continue
-            
-            nextCorners = [None]*4
-            for i in range(4):
-                if nextPos == self.corners[i]:
-                    nextCorners[i] = True
-                else:
-                    nextCorners[i] = state[1][i]     
-            nextState = (nextPos, (nextCorners[0],nextCorners[1],nextCorners[2],nextCorners[3]))
-            cost = self.costFn(nextState)
-            successors.append((nextState, action, cost))
+            #   x,y = currentPosition
+            #   dx, dy = Actions.directionToVector(action)
+            #   nextx, nexty = int(x + dx), int(y + dy)
+            #   hitsWall = self.walls[nextx][nexty]
 
+            "*** YOUR CODE HERE ***"
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -383,41 +359,9 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    
-    # the index of corners that are not reached
-    index = []
-    for i in range(4):
-        if not state[1][i]:
-            index.append(i)
-   
-    h = 0          
-    pos = state[0]
-    cornerDist = []   
-    d1 = util.manhattanDistance(corners[0], corners[1])
-    d2 = util.manhattanDistance(corners[0], corners[2])
-    longer = max(d1,d2)
-    shorter = min(d1,d2)
-    
-    if len(index)==1:
-        h = util.manhattanDistance(pos, corners[index[0]])
-    elif len(index)==2:
-        pc1 = util.manhattanDistance(pos, corners[index[0]])
-        pc2 = util.manhattanDistance(pos, corners[index[1]])
-        h = min(pc1, pc2) + util.manhattanDistance(corners[index[0]], corners[index[1]])
-    elif len(index)==3:
-        for i in range(len(index)):
-            cornerDist.append(util.manhattanDistance(pos, corners[index[i]]))
-        closest = min(cornerDist) 
-        h = closest + shorter + longer
-    elif len(index)==4:
-        for i in range(len(index)):
-            cornerDist.append(util.manhattanDistance(pos, corners[index[i]]))
-        closest = min(cornerDist) 
-        h = closest + shorter*2 + longer   
-    else:
-        h = 0        
 
-    return h
+    "*** YOUR CODE HERE ***"
+    return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -440,19 +384,6 @@ class FoodSearchProblem:
         self.startingGameState = startingGameState
         self._expanded = 0 # DO NOT CHANGE
         self.heuristicInfo = {} # A dictionary for the heuristic to store information
-        
-        pos, foodGrid = self.start
-        dists = {}
-        foodNum = foodGrid.count()
-        foodList = foodGrid.asList()
-        for i in range(foodNum):
-            for j in range(foodNum):
-                if i == j:
-                    continue
-                d = util.manhattanDistance(foodList[i], foodList[j])
-                dists[(foodList[i],foodList[j])] = d
-        self.heuristicInfo['foodDist'] = dists    
-        
 
     def getStartState(self):
         return self.start
@@ -523,79 +454,8 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    
-    # get distance between every pair of food dots
-    fDists = []
-    foodList = foodGrid.asList()
-    foodNum = foodGrid.count()
-    for i in range(foodNum):
-        for j in range(i+1, foodNum):
-            d = util.manhattanDistance(foodList[i], foodList[j])
-            fDists.append( ((foodList[i],foodList[j]), d) )
-    
-    # sort by distance
-    fDists = sorted(fDists, key=lambda d:d[1])
-
-    totalDists = []
-    # loop through each food dot f
-    for f in foodList:
-        # distance from p to f
-        pDist = util.manhattanDistance(position, f)
-
-        totalFdist = 0
-        count = 0
-        vReached = {}
-        # get the smallest total distance that connects all food dots, starting from f
-        for dist in fDists:
-            if len(vReached) == foodNum + 1 and count == foodNum:
-                break
-            
-            v1 = dist[0][0]
-            v2 = dist[0][1]
-            
-            # when v1v2 shouldn't be added
-            if v1 == f and v1 in vReached:
-                continue
-            if v2 == f and v2 in vReached:
-                continue
-            if v1 in vReached and vReached[v1] > 1:
-                continue
-            if v2 in vReached and vReached[v2] > 1:
-                continue
-     
-            # add v1v2
-            if not v1 in vReached:
-                vReached[v1] = 1
-            else:
-                vReached[v1] += 1
-            if not v2 in vReached:
-                vReached[v2] = 1
-            else:
-                vReached[v2] += 1    
-            
-            # when all the v form a loop, v1v2 shouldn't be added  
-            countV = 0
-            for v in vReached:
-                if vReached[v] == 2: 
-                    countV += 1
-            if countV == len(vReached):
-                vReached[v1] -= 1
-                vReached[v2] -= 1
-                continue
-            
-            totalFdist += dist[1]
-            count += 1
-        
-        # total distance from p
-        totalDist = pDist + totalFdist
-        totalDists.append(totalDist)
-    
-    # use the min as heuristic
-    if totalDists:
-        h = min(totalDists)
-    else:
-        h = 0
-    return h
+    "*** YOUR CODE HERE ***"
+    return 0
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -625,9 +485,8 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        self.searchFunction = search.bfs       
-        actions  = self.searchFunction(problem)      
-        return actions
+        "*** YOUR CODE HERE ***"
+        util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -661,8 +520,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x,y = state
-        return self.food[x][y]
 
+        "*** YOUR CODE HERE ***"
+        util.raiseNotDefined()
 
 def mazeDistance(point1, point2, gameState):
     """
