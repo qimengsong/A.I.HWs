@@ -73,6 +73,7 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -87,21 +88,155 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
+    "*** YOUR CODE HERE ***"
+
+    startState = problem.getStartState()
+    goalState = None
     
-    print "Start:", problem.getStartState()
-    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    # LIFO queue / stack
+    # same node can be pushed multiple times to the stack, because LIFO
+    stack = util.Stack()
+    stack.push(startState)
     
+    # map node to tuple (parent, action) for retrieving path
+    toParent = {}
+    toParent[startState] = (None, None)
+    
+    # add node when finished processing, popped out of stack
+    explored = set()
+    explored.add(startState)
+    
+    
+    while not stack.isEmpty():
+        v = stack.pop()
+        explored.add(v)
+        if problem.isGoalState(v):
+            goalState = v
+            break
+        successors = problem.getSuccessors(v)
+        for successor in successors:
+            #print successor
+            successorState = successor[0]
+            if not successorState in explored:
+                stack.push(successorState)
+                toParent[successorState] = (v, successor[1])
+
+
+    #retrieve path
+    actions = []
+    if goalState:
+        s = goalState
+        while toParent[s][1]:
+            actions.append(toParent[s][1])
+            s = toParent[s][0]
+          
+    actions.reverse()
+    return actions            
+
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    startState = problem.getStartState()
+    goalState = None
+    
+    # FIFO queue
+    # same node is only pushed once
+    queue = util.Queue()
+    queue.push(startState)
+    
+    # map node to (parent, action) for retrieving path
+    toParent = {}
+    toParent[startState] = (None, None)
+
+    # push node when first visited
+    discovered = set()
+    discovered.add(startState)
+    
+    
+    while not queue.isEmpty():
+        # expand every node in queue
+        v = queue.pop()
+        if problem.isGoalState(v):
+            goalState = v
+            break
+        successors = problem.getSuccessors(v)
+        for successor in successors:
+            successorState = successor[0]
+            # push when first visited, don't push again in another path
+            if not successorState in discovered:
+                queue.push(successorState)
+                discovered.add(successorState)
+                toParent[successorState] = (v, successor[1])    
+
+    #retrieve path
+    actions = []
+    if goalState:
+        s = goalState
+        while toParent[s][1]:
+            actions.append(toParent[s][1])
+            s = toParent[s][0]
+           
+    actions.reverse()
+    return actions 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    "*** YOUR CODE HERE ***"    
+    startState = problem.getStartState()
+    goalState = None
+    
+    # priority queue
+    # same node can be pushed multiple times
+    pqueue = PriorityQueue()
+    pqueue.push(startState, 0)
+    
+    # add node when finished processing
+    explored = set()
+    explored.add(startState)
+    
+    # map node to (parent, action, current cost) for retrieving path
+    toParent = {}
+    toParent[startState] = (None, None, 0)
+    
+    while not pqueue.isEmpty():
+        v, priority = pqueue.pop()
+        explored.add(v)
+        
+        if problem.isGoalState(v):
+            goalState = v
+            break
+        
+        successors = problem.getSuccessors(v)
+        for successor in successors:
+            successorState = successor[0]
+            if not successorState in explored:
+                cost = priority + successor[2] 
 
+                # if item already exist in queue
+                if pqueue.hasItem(successorState):
+                    # if old cost is lower, do nothing
+                    if cost >= pqueue.getPriority(successorState):
+                        continue
+                    # remove old item before pushing
+                    else:
+                        pqueue.removeItem(successorState)
+                pqueue.push(successorState, cost)
+                # update toParent
+                toParent[successorState] = (v, successor[1], cost)
+
+    #retrieve path
+    actions = []
+    if goalState:
+        s = goalState
+        while toParent[s][1]:
+            actions.append(toParent[s][1])
+            s = toParent[s][0]
+            
+    actions.reverse()
+    return actions 
+           
+                
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -112,9 +247,112 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    """Search the node of least total cost first."""
+    "*** YOUR CODE HERE ***"    
+    
+    startState = problem.getStartState()
+    goalState = None
+    
+    # priority queue
+    # same node can be pushed multiple times
+    pqueue = PriorityQueue()
+    pqueue.push(startState, heuristic(startState, problem))
+    
+    # add node when finished processing
+    explored = set()
+    explored.add(startState)
+    
+    # map node to (parent, action, current cost) for retrieving path
+    toParent = {}
+    toParent[startState] = (None, None, 0)
+    
+    while not pqueue.isEmpty():
+        v, priority = pqueue.pop()
+        explored.add(v)
+        
+        if problem.isGoalState(v):
+            goalState = v
+            break
+        
+        successors = problem.getSuccessors(v)
+        for successor in successors:
+            successorState = successor[0]
+            if not successorState in explored:
+                cost = toParent[v][2] + successor[2] 
+                h = heuristic(successorState, problem)
+                f = h + cost
+                
+                # if item already exist in queue
+                if pqueue.hasItem(successorState):
+                    # if old f is lower, do nothing
+                    if f >= pqueue.getPriority(successorState):
+                        continue
+                    # remove old item before pushing
+                    else:
+                        pqueue.removeItem(successorState)
+                pqueue.push(successorState, f)
+                # update toParent
+                toParent[successorState] = (v, successor[1], cost)
+
+    #retrieve path
+    actions = []
+    if goalState:
+        s = goalState
+        while toParent[s][1]:
+            actions.append(toParent[s][1])
+            s = toParent[s][0]
+            
+    actions.reverse()
+    return actions 
 
 
+import heapq
+class PriorityQueue:
+
+    def  __init__(self):
+        self.heap = []
+        self.item_dict = {}
+
+    def push(self, item, priority):
+
+        entry = (priority, item)
+        heapq.heappush(self.heap, entry)
+        self.item_dict[item] = entry
+    
+    # pop the smallest
+    def pop(self):
+        priority, item = heapq.heappop(self.heap)
+        if item in self.item_dict and self.item_dict[item][0] == priority:
+            del self.item_dict[item]
+        return (item, priority)
+
+    def isEmpty(self):
+        return len(self.heap) == 0
+    
+    def removeItem(self, item):
+        if not item in self.item_dict:
+            raise KeyError("Can't find item.")
+        
+        priority = self.item_dict[item][0]
+        del self.item_dict[item]
+        
+        self.heap.remove((priority, item))
+        heapq.heapify(self.heap)
+        
+    # return the item with 
+    def getPriority(self, item):
+        if item in self.item_dict:
+            priority = self.item_dict[item][0]
+            return priority
+        else:
+            raise KeyError("Can't find item.")
+        
+    def hasItem(self, item):
+        if item in self.item_dict:
+            return True
+        else:
+            return False
+    
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
